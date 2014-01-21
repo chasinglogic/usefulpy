@@ -16,7 +16,6 @@ you can use as many target files as you want but it is memory intensive to do so
 It may crash.
 
 OUTPUT
-
 ========
 
 The output will look like
