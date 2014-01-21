@@ -106,14 +106,23 @@ def writeIdsAndClassesToFile(filename, ids, classes):
 		target.write(originalText)
 		return True
 
+def writeToFiles(files, ids, classes):
+	for fil in files:
+		writeIdsAndClassesToFile(fil, ids, classes)
+
 def main():
-	if len(sys.argv) != 3:
-		print("Try python useful.py file.html targetFile1")
-		print("or useful sourceFile.html targetFile1 if you're fancy.")
+	if len(sys.argv) < 3:
+		print("Try python useful.py file.html targetFile1 targetFile2...etc")
+		print("or useful sourceFile.html targetFile1 targetFile2...etc if you're fancy.")
 		sys.exit("Incorrect Usage")
 
 	sourceFile = sys.argv[1]
-	targetFile = sys.argv[2]
+	targetFiles = []
+	i = 2
+	while i < len(sys.argv):
+		targetFiles.append(sys.argv[i])
+		i += 1
+
 	# hits holds all the lines that contain id=
 	idHits    = findHits(sourceFile, "id=")
 	classHits = findHits(sourceFile, "class=")
@@ -121,12 +130,9 @@ def main():
 	ids     = extractIds(idHits)
 	classes = extractClasses(classHits)
 	# this will write the ids in the form of a comment
-	# to the top of our css or js file.
-	success = writeIdsAndClassesToFile(targetFile, ids, classes)
+	# to the top of our css and js files.
+	writeToFiles(targetFiles, ids, classes)
 
-	if success:
-		print("Done completed successfully")
-	else:
-		print("Done but there were errors."	)
+	print("Done completed successfully")
 
 main()
