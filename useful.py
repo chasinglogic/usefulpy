@@ -14,11 +14,21 @@ def extractIds(lines):
 		ids.append('\t' + li.partition('id="')[-1].partition('"')[0])
 	return ids
 
-# def extractClasses(lines):
-# 	classes = ["CLASSES:\n\n"]
-# 	for li in lines:
-# 		classes.append(li.partition('class="')[-1].partition('"')[0])
-# 	return classes
+def extractClasses(lines):
+	classes = ["\nCLASSES:"]
+	# This whole using found thing feels really hacky. There has got to be a better way.
+	for li in lines:
+		found = False
+		name = "\t" + li.partition('class="')[-1].partition('"')[0]
+
+		for item in classes:
+			if item == name:
+				found = True
+
+		if found == False:
+			classes.append(name)
+
+	return classes
 
 def findHits(filename, what):
 	with open(filename, "r") as source:
@@ -59,7 +69,7 @@ def removeDuplicates(dupes, ids):
 
 	return newIds
 
-def writeIdsToFile(filename, ids):
+def writeIdsAndClassesToFile(filename, ids, classes):
 	# We have to read the entire file into memory so we can 
 	# "fake" prepend to the file since there is no easy or safe
 	# way to do this.
@@ -72,17 +82,29 @@ def writeIdsToFile(filename, ids):
 	# This is a little weird but it was the best solution I came up with. Feel free to make me look like an idiot.
 	else:
 		newIds = ids
-	# if there are no newIds (i.e. everything already existed or for some god awful reason no ids existed in the html) 
-	# we don't want to write at all.	
-	if len(newIds) > 0:
+
+	dupes, dupesyes = findDuplicates(originalText, classes)
+	# if we find dupes then remove them otherwise keep living life.
+	if dupesyes:
+		newClasses = removeDuplicates(dupes, classes)
+	else:
+		newClasses = classes
+	
 		# Writes all ids as a block comment to target file
-		with open(filename, "w") as target:
-			target.write("/*")
+	with open(filename, "w") as target:
+		target.write("/*")
+		# if there are no newIds (i.e. everything already existed or for some god awful reason no ids existed in the html) 
+		# we don't want to write at all.	
+		if len(newIds) > 0:		
 			for names in newIds:
 				target.write(names + '\n')
-			target.write("*/\n\n")
-			target.write(originalText)
-			return True
+		# if there are no newClasses blah blah blah
+		if len(newClasses) > 0:
+			for names in classes:
+				target.write(names + '\n')
+		target.write("*/\n\n")
+		target.write(originalText)
+		return True
 
 def main():
 	if len(sys.argv) != 3:
@@ -94,17 +116,17 @@ def main():
 	targetFile = sys.argv[2]
 	# hits holds all the lines that contain id=
 	idHits    = findHits(sourceFile, "id=")
-	# classHits = findHits(sourceFile, "class=")
+	classHits = findHits(sourceFile, "class=")
 	# ids holds all the ids from the html file.
 	ids     = extractIds(idHits)
-	# classes = extractClasses(classHits)
+	classes = extractClasses(classHits)
 	# this will write the ids in the form of a comment
 	# to the top of our css or js file.
-	success = writeIdsToFile(targetFile, ids)
+	success = writeIdsAndClassesToFile(targetFile, ids, classes)
 
 	if success:
 		print("Done completed successfully")
 	else:
-		print("Done but there were errors.")
+		print("Done but there were errors."	)
 
 main()
